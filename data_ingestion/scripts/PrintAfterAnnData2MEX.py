@@ -100,5 +100,5 @@ def process_matrix_zip(zip_file_path, delete_after=False):
                 print(f"已删除解压的文件: {extracted_files[file_name]}")
 
 # 示例调用
-zip_file_path = "/home/lcr/Desktop/BioWork/WorkData/OutPutData/A single-cell and spatially-resolved atlas of human breast cancers-matrix.zip"  # 传入zip文件路径
+zip_file_path = "F:/biowork/raw_data/CELLxGENE/HTAPP-783-SMP-4081_scRNA-seq/h5ad_output/matrix.zip"  # 传入zip文件路径
 process_matrix_zip(zip_file_path, delete_after=True)
