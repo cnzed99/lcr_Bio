@@ -134,3 +134,57 @@
     *   可以将反卷积结果与其他的空间转录组学数据或单细胞 RNA 测序数据进行整合分析，以更深入地了解组织中细胞类型的组成和空间分布。
 
 4. **下游分析:** 基于上述分析，可以探究不同细胞类型在空间上的相互作用、信号通路变化、以及与疾病发生发展的关系等。
+
+
+# Gemini-exp 输入文件
+
+本分析需要多个输入文件，分为必填和可选两类。
+
+**一、必填输入文件 (代码运行必须具备):**
+
+1. **`VisiumFFPE_Mouse_Brain_Transgenic_Age_17p9_Rep_1.h5` (10x Genomics Visium 数据):** 这是包含空间转录组数据的核心数据文件。没有此文件，代码无法运行。
+
+    * **获取原始数据方式:**
+        * 1. 10x Genomics 官方网站:
+            地址: https://www.10xgenomics.com/products/spatial-gene-expression
+            数据: 10x Genomics 官方提供了大量的示例数据集，涵盖了各种组织类型和实验条件。这些数据通常可以免费下载，用于学习、测试和开发新的分析方法。
+            查找方式: 在 10x Genomics 官网的产品页面或者支持页面，可以找到 "Datasets" 或 "Resources" 等类似的链接，里面通常会列出可用的数据集。
+            2. 公共数据库:
+
+            GEO (Gene Expression Omnibus):
+            地址: https://www.ncbi.nlm.nih.gov/geo/
+            数据: GEO 是一个由 NCBI (National Center for Biotechnology Information) 维护的公共基因表达数据库，收录了大量的基因表达数据，包括 Visium 数据。
+            查找方式: 在 GEO 数据库中搜索 "Visium" 或相关的关键词，可以找到相关的研究和数据集。你需要查找那些使用了 "Visium Spatial Gene Expression" 技术的实验。
+            ArrayExpress:
+
+            地址: https://www.ebi.ac.uk/arrayexpress/
+            数据: ArrayExpress 是一个由 EMBL-EBI (European Bioinformatics Institute) 维护的公共基因表达数据库，也收录了一些 Visium 数据。
+            查找方式: 类似 GEO，在 ArrayExpress 中搜索 "Visium" 或相关的关键词。
+            SRA (Sequence Read Archive):
+            地址: https://www.ncbi.nlm.nih.gov/sra
+            数据: 虽然 SRA 主要存储的是原始测序数据 (fastq 文件)，但有时 Visium 数据的 fastq 文件也会上传到 SRA。
+            查找方式: 在 SRA 中搜索 "Visium" 或相关的关键词。
+
+            3. 科研论文的补充材料:
+
+            数据: 许多使用 Visium 技术的科研论文会将数据上传到公共数据库 (如 GEO, ArrayExpress) 或作为论文的补充材料 (Supplementary Materials) 发布。
+            查找方式: 阅读你感兴趣的 Visium 相关的科研论文，查看论文中 "Data Availability" 或 "Methods" 部分，通常会说明数据的存储位置。
+        * 从上述网址手动下载。
+        * 使用您自己的 Visium 空间转录组数据文件 (HDF5 格式) 替换。
+
+自定义的辅助输入文件
+2. **`spatial_cord_subset_17p9_rep1.csv` (空间坐标子集):** 此文件定义了用于分析的 spots 子集。代码将根据此文件过滤主要的 Visium 数据。  即使没有此文件，代码也能运行，但会使用 Visium 数据中的所有 spots 进行分析。
+
+
+自定义的辅助输入文件
+3. **`astro_markers.csv` (星形胶质细胞标记基因):** 此文件包含用于识别星形胶质细胞的基因列表。即使没有此文件，代码也能运行，但星形胶质细胞的识别准确性可能会降低。
+
+    * **2和3获取方式:**
+    根据你的研究目标，决定是否需要创建 astro_markers.csv 和 spatial_cord_subset_17p9_rep1.csv 这样的辅助文件。
+    如果你需要指定某些基因作为特定细胞类型的标记，你需要创建 astro_markers.csv (或者其他细胞类型的标记基因列表文件)。
+    如果你需要分析特定区域的 spots，你需要创建 spatial_cord_subset_17p9_rep1.csv (或其他区域的坐标子集文件)。
+
+
+**二、可选输入文件:**
+
+1. **`optlDA.17p9_rep1_astrogenes.rds` (预先计算的 LDA 模型):** 此文件包含预先计算的 LDA 模型。由于代码包含重新拟合模型的功能 (`fitLDA()` 函数)，因此此文件并非必需。使用此文件可以避免重新计算，但这需要确保该文件中的模型与用于生成原始模型的数据和参数兼容。
