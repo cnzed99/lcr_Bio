@@ -2,7 +2,7 @@
 
 *   **`marker_gene_list()`:** 根据给定的主题 (topic) 和基因表达阈值，从最佳 LDA 模型的基因表达矩阵中提取高表达基因及其 log2 倍数变化 (log2FC)。
     ```R
-    marker_gene_list<-function(topic,exp_value,Gexp){
+    marker_gene_list <- function(topic, exp_value, Gexp){
       ## highly expressed in cell-type of interest
       highgexp <- names(which(Gexp[topic,] > exp_value))
       ## high log2(fold-change) compared to other deconvolved cell-types
@@ -10,11 +10,20 @@
       return(tibble(Gene=names(log2fc),log2fc=log2fc))
     }
     ```
+    *   **`topic`**:  **指定的主题编号**。
+        *   **作用:**  用于索引基因表达矩阵 `Gexp` 的行，确定要分析哪个主题。
+        *   **参考值:**  根据 `fitLDA()` 函数运行的主题数 (K 值) 范围确定，例如 `1` 到 `K` 之间的整数。
+    *   **`exp_value`**:  **基因表达值的阈值**。
+        *   **作用:**  用于筛选在指定主题 `topic` 中表达值大于 `exp_value` 的基因。
+        *   **参考值:**  通常设置为一个正数，例如 `2`。根据数据情况进行调整，如果希望关注差异更显著的基因，可以适当提高该值；如果想要获得更多基因，可以降低该值。设置为0则会返回所有基因的log2fc。
+    *   **`Gexp`**:  **基因表达矩阵**。通常是 `getBetaTheta()` 函数返回结果中的 `beta`，表示每个主题中每个基因的表达值。
+        *   **作用:**  提供计算 log2FC 的数据。
+        *   **参考值:**  无，它是一个输入数据，不是需要设置的参数。
 
 *   **`plot_spatial()`:** 绘制特定主题在空间上的分布图，颜色深浅代表该主题的比例。
     ```R
-    plot_spatial<-function(plot_data=plot_data,suffix1='_prop.jpg',dir=dir,i){
-      p1<-ggplot(plot_data, aes(x, y,fill = prop)) +
+    plot_spatial <- function(plot_data=plot_data, suffix1='_prop.jpg', dir=dir, i){
+      p1 <- ggplot(plot_data, aes(x, y,fill = prop)) +
         geom_point(shape=21,size=4) +
         guides(size="none")+
         labs(title=str_c("topic ",i))+
@@ -25,34 +34,57 @@
              height=5, width=5, units='in', dpi=300)
     }
     ```
+    *   **`plot_data`**:  **绘图数据**，一个数据框，通常包含三列：x 坐标、y 坐标和对应主题的比例。
+        *   **作用:**  提供绘图所需的数据。
+        *   **参考值:**  无，它是一个输入数据，不是需要设置的参数。通常由`run_me_results`函数内部生成。
+    *   **`suffix1`**:  **输出图片文件名的后缀**。
+        *   **作用:**  用于自定义输出图片的文件名。
+        *   **参考值:**  默认为 `'_prop.jpg'`，可以根据需要修改，例如 `'_distribution.png'`。
+    *   **`dir`**:  **输出图片的目录**。
+        *   **作用:**  指定图片保存的路径。
+        *   **参考值:**  例如 `"output_18/"`，需要根据你的实际情况设置，确保该目录存在。
+    *   **`i`**:  **主题编号**。
+        *   **作用:**  用于生成图片标题和文件名。
+        *   **参考值:**  根据 `fitLDA()` 函数运行的主题数 (K 值) 范围确定，例如 `1` 到 `K` 之间的整数。
 
 *   **`run_me_QC()`:** 绘制模型的质量控制 (QC) 图，包括 perplexity、稀有细胞类型数量和 alpha 值随主题数 (K) 的变化趋势。
     ```R
-    run_me_QC<-function(ldas,starting_k=2,ending_k=22,dir){
+    run_me_QC <- function(ldas, starting_k=2, ending_k=22, dir){
       if(!dir.exists(dir)){dir.create(dir)}
-      alpha<-map(.x = (starting_k-1):(ending_k-1),~ldas$model[[.x]]@alpha)%>%unlist
-      plot_df<-tibble(K=starting_k:ending_k,alpha=alpha,perplexities=ldas$perplexities,rare=ldas$numRare)
-      p1<-ggplot(data = plot_df) +
+      alpha <- map(.x = (starting_k-1):(ending_k-1),~ldas$model[[.x]]@alpha)%>%unlist
+      plot_df <- tibble(K=starting_k:ending_k,alpha=alpha,perplexities=ldas$perplexities,rare=ldas$numRare)
+      p1 <- ggplot(data = plot_df) +
         geom_line(mapping = aes(x = K,y = perplexities), color="red3",size=2) +
         geom_point(mapping = aes(x = K,y = perplexities),shape=21, color="black", fill=ifelse(alpha > 1, "white", "red3"), size=6)+
         theme_linedraw(base_size = 16,base_rect_size =2,base_line_size = 2)+ylab("perplexity")+
         ylim(min(plot_df$perplexities)-10,10+max(plot_df$perplexities))
-      p2<-ggplot(data = plot_df) +
+      p2 <- ggplot(data = plot_df) +
         geom_point(mapping = aes(x = K,y = rare),shape=21, color="black", fill="blue", size=4)+
         geom_line(mapping = aes(x = K,y = rare), color="blue",size=2)+
         theme_linedraw(base_size = 16,base_rect_size =2,base_line_size = 2)+ylab("cell−types with mean proportion < 5%")
-      p3<-ggplot(data = plot_df) +
+      p3 <- ggplot(data = plot_df) +
         geom_line(mapping = aes(x = K,y = alpha), color="darkgreen",size=2) +ylim(c(0,1))+
         geom_point(mapping = aes(x = K,y = alpha),shape=21, color="black", fill=ifelse(alpha > 1, "white", "darkgreen"), size=6)+
         theme_linedraw(base_size = 16,base_rect_size =2,base_line_size = 2)+ylab("alpha")
       ggsave(plot = p1+p2+p3,filename = str_c(dir,"merged_QC_plot.jpg"),height=5, width=12, units='in', dpi=300)
     }
     ```
+    *   **`ldas`**:  **`fitLDA()` 函数返回的 LDA 模型列表对象**。
+        *   **作用:**  提供绘制 QC 图所需的数据，包括每个 K 值对应的模型的 perplexity, 稀有细胞类型数量和 alpha 值。
+        *   **参考值:**  无，它是一个输入数据，不是需要设置的参数。
+    *   **`starting_k`**:  **起始的 K 值**。
+        *   **作用:**  指定绘制 QC 图的 K 值范围的起始值。
+        *   **参考值:**  默认为 `2`，需要与 `fitLDA()` 函数中设置的 `Ks` 参数的最小值一致。
+    *   **`ending_k`**:  **终止的 K 值**。
+        *   **作用:**  指定绘制 QC 图的 K 值范围的终止值。
+        *   **参考值:**  默认为 `22`，需要与 `fitLDA()` 函数中设置的 `Ks` 参数的最大值一致。
+    *   **`dir`**:  **输出 QC 图的目录**。
+        *   **作用:**  指定 QC 图保存的路径。
+        *   **参考值:**  例如 `"output_18/"`，需要根据你的实际情况设置，确保该目录存在。
 
 *   **`run_me_results()`:** 对最佳 LDA 模型进行结果分析和可视化。它会生成每个主题的空间分布图，并输出每个主题的高表达基因列表及其 log2FC 值。
     ```R
-    run_me_results<-function(opt,
-                             dir,ldas ){
+    run_me_results <- function(opt, dir, ldas ){
       optLDA <- optimalModel(models = ldas, opt = opt)
       results <- getBetaTheta(optLDA,
                               perc.filt = 0.05,
@@ -73,6 +105,21 @@
            ~write_csv(x = .y,file = paste(dir,.x)))
     }
     ```
+    *   **`opt`**:  **最佳模型的 K 值**。
+        *   **作用:**  指定要使用的 LDA 模型的 K 值。
+        *   **参考值:**  根据 `run_me_QC()` 函数生成的 QC 图进行选择，通常选择 perplexity 较低、稀有细胞类型数量较少且 alpha 值小于 1 的 K 值。例如 `18`。
+    *   **`dir`**:  **输出结果的目录**。
+        *   **作用:**  指定保存空间分布图和高表达基因列表的路径。
+        *   **参考值:**  例如 `"output_18/"`，需要根据你的实际情况设置，确保该目录存在。
+    *   **`ldas`**:  **`fitLDA()` 函数返回的 LDA 模型列表对象**。
+        *   **作用:**  提供 `optimalModel()` 函数从中选择最佳模型的数据。
+        *   **参考值:**  无，它是一个输入数据，不是需要设置的参数。
+    *   **`perc.filt`**:  **getBetaTheta内部的过滤参数**。
+        *   **作用:**  控制稀有基因的过滤，在计算每个spot的beta分布时，将每个主题下丰度低于此值的基因过滤掉。
+        *   **参考值:**  默认为0.05。
+    *   **`betaScale`**:  **getBetaTheta内部的参数**。
+        *   **作用:**  控制数据缩放的参数。
+        *   **参考值:**  默认为1000。
 
 **2. 加载和预处理数据 (Load and preprocess data):**
 
